@@ -59,7 +59,7 @@ THE SOFTWARE.
 
 		<provider
 			android:name="androidx.core.content.FileProvider"
-			android:authorities="ch.blinkenlights.android.vanilla.fileprovider"
+			android:authorities="${applicationId}.fileprovider"
 			android:exported="false"
 			android:grantUriPermissions="true">
 			<meta-data
@@ -98,7 +98,7 @@ THE SOFTWARE.
 			android:launchMode="singleInstance" />
 		<receiver
 			android:name=".OneCellWidget"
-			android:label="Vanilla Music 1x1"
+			android:label="Vanilla Reprise 1x1"
 			android:exported="false">
 			<intent-filter>
 				<action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
@@ -109,7 +109,7 @@ THE SOFTWARE.
 		</receiver>
 		<receiver
 			android:name=".FourLongWidget"
-			android:label="Vanilla Music 4x1 A"
+			android:label="Vanilla Reprise 4x1 A"
 			android:exported="false">
 			<intent-filter>
 				<action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
@@ -120,7 +120,7 @@ THE SOFTWARE.
 		</receiver>
 		<receiver
 			android:name=".FourWhiteWidget"
-			android:label="Vanilla Music 4x1 White"
+			android:label="Vanilla Reprise 4x1 White"
 			android:exported="false">
 			<intent-filter>
 				<action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
@@ -131,7 +131,7 @@ THE SOFTWARE.
 		</receiver>
 		<receiver
 			android:name=".WidgetE"
-			android:label="Vanilla Music 4x1 B"
+			android:label="Vanilla Reprise 4x1 B"
 			android:exported="false">
 			<intent-filter>
 				<action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
@@ -142,7 +142,7 @@ THE SOFTWARE.
 		</receiver>
 		<receiver
 			android:name=".FourSquareWidget"
-			android:label="Vanilla Music 2x2 A"
+			android:label="Vanilla Reprise 2x2 A"
 			android:exported="false">
 			<intent-filter>
 				<action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
@@ -153,7 +153,7 @@ THE SOFTWARE.
 		</receiver>
 		<receiver
 			android:name=".WidgetD"
-			android:label="Vanilla Music 2x2 B"
+			android:label="Vanilla Reprise 2x2 B"
 			android:exported="false">
 			<intent-filter>
 				<action android:name="android.appwidget.action.APPWIDGET_UPDATE" />

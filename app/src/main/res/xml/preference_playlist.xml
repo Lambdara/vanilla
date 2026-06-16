@@ -46,7 +46,7 @@ THE SOFTWARE.
 		android:title="@string/playlist_sync_folder_title"
 		android:summary="@string/playlist_sync_folder_summary">
 		<intent
-			android:targetPackage="ch.blinkenlights.android.vanilla"
+			android:targetPackage="lambdara.vanillareprise"
 			android:targetClass="ch.blinkenlights.android.vanilla.PlaylistObserverDirActivity" />
 	</PreferenceScreen>
 	<CheckBoxPreference

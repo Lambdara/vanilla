@@ -4,7 +4,7 @@
 
 **You MUST delete the content above including this line before posting, otherwise your issue may be closed as 'invalid'.**
 
-- Vanilla Music Version (Settings -> About):
+- Vanilla Reprise Version (Settings -> About):
 - Android Version:
 - Phone vendor / model:
 - Application was downloaded from (use `[x]`):

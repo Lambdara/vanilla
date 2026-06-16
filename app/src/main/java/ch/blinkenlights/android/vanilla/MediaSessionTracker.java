@@ -47,7 +47,7 @@ public class MediaSessionTracker {
 
 	MediaSessionTracker(Context context) {
 		mContext = context;
-		mMediaSession = new MediaSessionCompat(mContext, "Vanilla Music Media Session");
+		mMediaSession = new MediaSessionCompat(mContext, "Vanilla Reprise Media Session");
 		mMediaSession.setCallback(new MediaSessionCompat.Callback() {
 			@Override
 			public void onPause() {

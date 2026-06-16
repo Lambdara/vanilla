@@ -1,7 +1,29 @@
-Vanilla Music
-=====================
+Vanilla Reprise
+================
 
-Vanilla Music player is a [GPLv3](LICENSE) licensed MP3/OGG/FLAC/PCM player for Android with the following features:
+Vanilla Reprise is a modified fork of [Vanilla Music](https://github.com/vanilla-music/vanilla), a GPLv3 licensed MP3/OGG/FLAC/PCM player for Android.
+
+This fork is not the official Vanilla Music project. It keeps the original copyright notices, license text, and in-app acknowledgements, while using a distinct app name, package id, and launcher icon so it is not confused with upstream Vanilla Music.
+
+Fork Identity
+-------------
+
+* App name: Vanilla Reprise
+* Android application id: `lambdara.vanillareprise`
+* Upstream project: [vanilla-music/vanilla](https://github.com/vanilla-music/vanilla)
+* License: [GNU GPLv3](LICENSE), with included MIT/Apache notices preserved where applicable
+
+Notable Fork Changes
+--------------------
+
+* Renamed the app from Vanilla Music to Vanilla Reprise.
+* Changed the Android application id so it installs separately from upstream Vanilla Music.
+* Replaced the launcher icon with distinct Vanilla Reprise artwork.
+* Fixed media-session notification metadata so the lock screen shows the current song title and album art.
+
+Features Inherited From Vanilla Music
+-------------------------------------
+
 * multiple playlist support
 * grouping by artist, album or genre
 * plain filesystem browsing
@@ -11,82 +33,54 @@ Vanilla Music player is a [GPLv3](LICENSE) licensed MP3/OGG/FLAC/PCM player for 
 * cover art support
 * [Simple Last.fm Scrobbler](https://github.com/tgwizard/sls) support
 
-[<img src="https://f-droid.org/badge/get-it-on.png"
-      alt="Get it on F-Droid"
-      height="80">](https://f-droid.org/app/ch.blinkenlights.android.vanilla)
-
-**Note:** As of 23. Jun 2024, Vanilla Music is *no longer* available in the Google Play store:
-I simply don't have time to comply with random policy changes and verification requests.
-Any release you see there is probably an ad-infested fork uploaded by someone else.
-
-
 Plugins
-===========
+=======
 
-Vanilla Music also includes support for plugins, this is a list of some existing plugins:
+Vanilla Reprise currently keeps Vanilla Music plugin compatibility where practical. Existing Vanilla Music plugins may still identify themselves using the upstream Vanilla plugin API names:
+
 * [Cover fetcher](https://play.google.com/store/apps/details?id=com.kanedias.vanilla.coverfetch)
 * [Lyrics search](https://play.google.com/store/apps/details?id=com.kanedias.vanilla.lyrics)
 * [Tag editor](https://play.google.com/store/apps/details?id=com.kanedias.vanilla.audiotag)
 * [Headphone detector](https://play.google.com/store/apps/details?id=ch.blinkenlights.android.vanillaplug)
 
-
-Donations
-===========
-You can donate to Vanilla Musics development via Bitcoin
-
-Bitcoin: [1adrianERDJusC4c8whyT81zAuiENEqub](https://blockchain.info/address/1adrianERDJusC4c8whyT81zAuiENEqub)
-
-
-Community
-===========
-Come over and join us on our subreddit [**/r/VanillaMusic**](https://www.reddit.com/r/vanillamusic) to hangout with fellow Vanilla Music users, ask questions, or help others by answering their questions!
-
-Contributing
+Attribution
 ===========
 
-Translating
------------
-[You can help translate here][1]. If your language isn't on the list, sign in to transifex and request the language to be added to the list of translations.
-(Feel free to open a bug if your request was not approved within a few days - i don't look into transifex that often.)
+Vanilla Music was created and maintained by Adrian Ulrich and contributors. This repository is a downstream fork and does not claim to be the official Vanilla Music app.
 
-Contributing code
----------------
-* A list of open issues can be found at the [issue tracker][2]
-* Features we would like to see (but nobody started working on them yet) have the [patches-welcome][3] label attached to them. Please let us know if you start working on such an open issue (to avoid duplicate work)
-* We accept raw patches and github pull request - and we use tabs (if your editor understands .editorconfig, it will help you enforce this).
+The original upstream community and issue tracker are:
+
+* Website: https://vanilla-music.github.io/
+* Source and issues: https://github.com/vanilla-music/vanilla
+* Community: https://www.reddit.com/r/vanillamusic
+
+Please report Vanilla Reprise-specific issues to this fork rather than upstream Vanilla Music.
 
 Building
 ========
+
 To build you will need:
 
- * A Java compiler compatible with Java 1.8
- * The Android SDK with platform 26 installed
+* A Java compiler compatible with Java 1.8 or newer
+* The Android SDK with the configured compile SDK installed
 
-Building from command-line
---------------------------
-> Note: at the time of this writing, the current version of Gradle ([4.5.1](https://gradle.org/releases/)) is not compatible with the current version of JDK ([9.0.4](http://www.oracle.com/technetwork/java/javase/downloads/jdk9-downloads-3848520.html)). To have the build succeed, use JDK version [1.8.0_162](http://www.oracle.com/technetwork/java/javase/downloads/jdk8-downloads-2133151.html).
- * `gradle build` to build the APK
- * Optional: `gradle installDebug` to install the APK to a connected device
+Building from command line:
 
-Building with Android Studio
----------------------
-You can also build with Android Studio by importing this project into it.
+```sh
+./gradlew build
+```
 
-Building from Eclipse
----------------------
-You can also build from Eclipse. Create a new Android Project, choosing "Create
-project from exisiting source", then set the compiler compliance level to 1.6
-in project settings.
+Install a debug build to a connected device:
 
-Nightly Builds
----------------------
-Automatically created builds are available from http://android.eqmx.net/android/vanilla/VanillaMusic-nightly.apk
+```sh
+./gradlew installDebug
+```
 
 Documentation
 =============
-Javadocs can be generated using `gradle javadoc` or `ant doc`
 
+Javadocs can be generated using:
 
-  [1]: https://www.transifex.com/projects/p/vanilla-music-1/
-  [2]: https://github.com/vanilla-music/vanilla/issues
-  [3]: https://github.com/vanilla-music/vanilla/labels/patches-welcome
+```sh
+./gradlew javadoc
+```
