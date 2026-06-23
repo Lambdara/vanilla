@@ -193,7 +193,7 @@ public class LibraryActivity
 
 		loadTabOrder();
 		int page = settings.getInt(PrefKeys.LIBRARY_PAGE, PrefDefaults.LIBRARY_PAGE);
-		if (page != 0) {
+		if (page > 0 && page < pagerAdapter.getCount()) {
 			pager.setCurrentItem(page);
 		}
 
@@ -232,6 +232,9 @@ public class LibraryActivity
 		if (mPagerAdapter.loadTabOrder()) {
 			// Reinitializes all tabs
 			mVanillaTabLayout.setViewPager(mViewPager);
+			int tabCount = mPagerAdapter.getCount();
+			if (tabCount > 0 && mViewPager.getCurrentItem() >= tabCount)
+				mViewPager.setCurrentItem(tabCount - 1);
 		}
 	}
 

@@ -69,7 +69,7 @@ public class TabOrderAdapter extends BaseAdapter {
 	@Override
 	public int getCount()
 	{
-		return LibraryPagerAdapter.MAX_ADAPTER_COUNT;
+		return LibraryPagerAdapter.MAX_TAB_COUNT;
 	}
 
 	@Override

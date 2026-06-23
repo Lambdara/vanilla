@@ -97,7 +97,7 @@ public class TabOrderActivity extends Activity
 	{
 		mAdapter.setTabIds(LibraryPagerAdapter.DEFAULT_TAB_ORDER.clone());
 		DragSortListView list = mList;
-		for (int i = 0; i != LibraryPagerAdapter.MAX_ADAPTER_COUNT; ++i) {
+		for (int i = 0; i != LibraryPagerAdapter.MAX_TAB_COUNT; ++i) {
 			list.setItemChecked(i, LibraryPagerAdapter.DEFAULT_TAB_VISIBILITY[i]);
 		}
 		save();
@@ -110,8 +110,8 @@ public class TabOrderActivity extends Activity
 	{
 		int[] ids = mAdapter.getTabIds();
 		DragSortListView list = mList;
-		char[] out = new char[LibraryPagerAdapter.MAX_ADAPTER_COUNT];
-		for (int i = 0; i != LibraryPagerAdapter.MAX_ADAPTER_COUNT; ++i) {
+		char[] out = new char[LibraryPagerAdapter.MAX_TAB_COUNT];
+		for (int i = 0; i != LibraryPagerAdapter.MAX_TAB_COUNT; ++i) {
 			out[i] = (char)(list.isItemChecked(i) ? 128 + ids[i] : 127 - ids[i]);
 		}
 
@@ -127,27 +127,42 @@ public class TabOrderActivity extends Activity
 	public void load()
 	{
 		String in = SharedPrefHelper.getSettings(this).getString(PrefKeys.TAB_ORDER, PrefDefaults.TAB_ORDER);
-		if (in != null && in.length() == LibraryPagerAdapter.MAX_ADAPTER_COUNT) {
+		if (in != null && (in.length() == LibraryPagerAdapter.MAX_TAB_COUNT || in.length() == LibraryPagerAdapter.MAX_ADAPTER_COUNT)) {
 			char[] chars = in.toCharArray();
-			int[] ids = new int[LibraryPagerAdapter.MAX_ADAPTER_COUNT];
-			for (int i = 0; i != LibraryPagerAdapter.MAX_ADAPTER_COUNT; ++i) {
+			int[] ids = new int[LibraryPagerAdapter.MAX_TAB_COUNT];
+			boolean[] visible = new boolean[LibraryPagerAdapter.MAX_TAB_COUNT];
+			int count = 0;
+			int visibleCount = 0;
+			for (int i = 0; i != chars.length; ++i) {
 				int v = chars[i];
 				v = v < 128 ? -(v - 127) : v - 128;
 				if (v >= MediaUtils.TYPE_COUNT) {
 					ids = null;
 					break;
 				}
-				ids[i] = v;
-			}
-
-			if (ids != null) {
-				mAdapter.setTabIds(ids);
-				DragSortListView list = mList;
-				for (int i = 0; i != LibraryPagerAdapter.MAX_ADAPTER_COUNT; ++i) {
-					list.setItemChecked(i, chars[i] >= 128);
+				if (LibraryPagerAdapter.isTabType(v)) {
+					if (count == LibraryPagerAdapter.MAX_TAB_COUNT) {
+						ids = null;
+						break;
+					}
+					ids[count] = v;
+					visible[count] = chars[i] >= 128;
+					if (visible[count])
+						++visibleCount;
+					++count;
 				}
 			}
 
+			if (ids != null && count == LibraryPagerAdapter.MAX_TAB_COUNT && visibleCount != 0) {
+				mAdapter.setTabIds(ids);
+				DragSortListView list = mList;
+				for (int i = 0; i != LibraryPagerAdapter.MAX_TAB_COUNT; ++i) {
+					list.setItemChecked(i, visible[i]);
+				}
+				return;
+			}
+
+			restoreDefault();
 			return;
 		}
 

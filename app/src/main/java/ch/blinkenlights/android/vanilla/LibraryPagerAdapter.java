@@ -71,11 +71,15 @@ public class LibraryPagerAdapter
 	 */
 	public static final int[] DEFAULT_TAB_ORDER = { MediaUtils.TYPE_ARTIST, MediaUtils.TYPE_ALBARTIST, MediaUtils.TYPE_COMPOSER,
 	                                                MediaUtils.TYPE_ALBUM, MediaUtils.TYPE_SONG, MediaUtils.TYPE_PLAYLIST,
-	                                                MediaUtils.TYPE_GENRE, MediaUtils.TYPE_FILE };
+	                                                MediaUtils.TYPE_FILE };
 	/**
 	 * The default visibility of tabs
 	 */
-	public static final boolean[] DEFAULT_TAB_VISIBILITY = { true, false, false, true, true, true, true, true };
+	public static final boolean[] DEFAULT_TAB_VISIBILITY = { true, false, false, true, true, true, true };
+	/**
+	 * The number of tabs that can be displayed and ordered.
+	 */
+	public static final int MAX_TAB_COUNT = DEFAULT_TAB_ORDER.length;
 
 	/**
 	 * The user-chosen tab order.
@@ -122,10 +126,6 @@ public class LibraryPagerAdapter
 	 * The playlist adapter instance, also stored at mAdapters[MediaUtils.TYPE_PLAYLIST].
 	 */
 	MediaAdapter mPlaylistAdapter;
-	/**
-	 * The genre adapter instance, also stored at mAdapters[MediaUtils.TYPE_GENRE].
-	 */
-	private MediaAdapter mGenreAdapter;
 	/**
 	 * The file adapter instance, also stored at mAdapters[MediaUtils.TYPE_FILE].
 	 */
@@ -220,10 +220,10 @@ public class LibraryPagerAdapter
 		String in = SharedPrefHelper.getSettings(mActivity).getString(PrefKeys.TAB_ORDER, PrefDefaults.TAB_ORDER);
 		int[] order = new int[MAX_ADAPTER_COUNT];
 		int count = 0;
-		if (in != null && in.length() == MAX_ADAPTER_COUNT) {
+		if (in != null && (in.length() == MAX_TAB_COUNT || in.length() == MAX_ADAPTER_COUNT)) {
 			char[] chars = in.toCharArray();
 			order = new int[MAX_ADAPTER_COUNT];
-			for (int i = 0; i != MAX_ADAPTER_COUNT; ++i) {
+			for (int i = 0; i != chars.length; ++i) {
 				char v = chars[i];
 				if (v >= 128) {
 					v -= 128;
@@ -232,14 +232,15 @@ public class LibraryPagerAdapter
 						count = 0;
 						break;
 					}
-					order[count++] = v;
+					if (isTabType(v))
+						order[count++] = v;
 				}
 			}
 		}
 
 		// set default tabs if none were loaded
 		if (count == 0) {
-			for (int i=0; i != MAX_ADAPTER_COUNT; i++) {
+			for (int i = 0; i != MAX_TAB_COUNT; i++) {
 				if (DEFAULT_TAB_VISIBILITY[i])
 					order[count++] = DEFAULT_TAB_ORDER[i];
 			}
@@ -262,12 +263,6 @@ public class LibraryPagerAdapter
 	 */
 	public void computeExpansions()
 	{
-		if (mGenreAdapter != null)
-			mGenreAdapter.setExpandable(
-				getMediaTypePosition(MediaUtils.TYPE_SONG) != -1 ||
-				getMediaTypePosition(MediaUtils.TYPE_ALBUM) != -1 ||
-				getMediaTypePosition(MediaUtils.TYPE_ARTIST) != -1
-			);
 		if (mArtistAdapter != null)
 			mArtistAdapter.setExpandable(
 				getMediaTypePosition(MediaUtils.TYPE_SONG) != -1 ||
@@ -320,14 +315,6 @@ public class LibraryPagerAdapter
 				break;
 			case MediaUtils.TYPE_PLAYLIST:
 				adapter = mPlaylistAdapter = new MediaAdapter(activity, MediaUtils.TYPE_PLAYLIST, null, activity);
-				break;
-			case MediaUtils.TYPE_GENRE:
-				adapter = mGenreAdapter = new MediaAdapter(activity, MediaUtils.TYPE_GENRE, null, activity);
-				mGenreAdapter.setExpandable(
-					getMediaTypePosition(MediaUtils.TYPE_SONG) != -1 ||
-					getMediaTypePosition(MediaUtils.TYPE_ALBUM) != -1 ||
-					getMediaTypePosition(MediaUtils.TYPE_ARTIST) != -1
-				);
 				break;
 			case MediaUtils.TYPE_FILE:
 				adapter = mFilesAdapter = new FileSystemAdapter(activity, mPendingFileLimiter);
@@ -648,6 +635,13 @@ public class LibraryPagerAdapter
 				return i;
 		}
 		return -1;
+	}
+
+	/**
+	 * Returns true if the media type is exposed as a library browser tab.
+	 */
+	public static boolean isTabType(int type) {
+		return type >= 0 && type < MediaUtils.TYPE_COUNT && type != MediaUtils.TYPE_GENRE;
 	}
 
 	/**
