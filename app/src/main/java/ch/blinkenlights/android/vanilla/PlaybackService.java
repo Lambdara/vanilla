@@ -44,6 +44,8 @@ import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
+import android.media.AudioAttributes;
+import android.media.AudioFocusRequest;
 import android.media.AudioDeviceInfo;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
@@ -323,6 +325,11 @@ public final class PlaybackService extends Service
 
 	private Looper mLooper;
 	private Handler mHandler;
+	private final AudioAttributes mPlaybackAttributes = new AudioAttributes.Builder()
+		.setUsage(AudioAttributes.USAGE_MEDIA)
+		.setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
+		.build();
+	private AudioFocusRequest mAudioFocusRequest;
 	VanillaMediaPlayer mMediaPlayer;
 	VanillaMediaPlayer mPreparedMediaPlayer;
 	private boolean mMediaPlayerInitialized;
@@ -373,6 +380,11 @@ public final class PlaybackService extends Service
 	 * True if we encountered a transient audio loss
 	 */
 	private boolean mTransientAudioLoss;
+	/**
+	 * True while playback is paused by transient audio focus loss and should
+	 * resume when focus returns.
+	 */
+	private boolean mPausedByTransientAudioFocusLoss;
 	/**
 	 * Magnitude of last sensed acceleration.
 	 */
@@ -514,6 +526,10 @@ public final class PlaybackService extends Service
 
 		mLooper = thread.getLooper();
 		mHandler = new Handler(mLooper, this);
+		mAudioFocusRequest = new AudioFocusRequest.Builder(AudioManager.AUDIOFOCUS_GAIN)
+			.setAudioAttributes(mPlaybackAttributes)
+			.setOnAudioFocusChangeListener(this, mHandler)
+			.build();
 
 		initWidgets();
 
@@ -659,7 +675,7 @@ public final class PlaybackService extends Service
 	 */
 	private VanillaMediaPlayer getNewMediaPlayer() {
 		VanillaMediaPlayer mp = new VanillaMediaPlayer(this);
-		mp.setAudioStreamType(AudioManager.STREAM_MUSIC);
+		mp.setAudioAttributes(mPlaybackAttributes);
 		mp.setOnCompletionListener(this);
 		mp.setOnErrorListener(this);
 		return mp;
@@ -784,6 +800,16 @@ public final class PlaybackService extends Service
 
 		if (mWakeLock != null && mWakeLock.isHeld())
 			mWakeLock.release();
+	}
+
+	private void saveCurrentPosition()
+	{
+		if (mCurrentSong != null && mMediaPlayerInitialized) {
+			int position = mMediaPlayer.getCurrentPosition();
+			mPendingSeek = position;
+			mPendingSeekSong = mCurrentSong.id;
+			saveState(position);
+		}
 	}
 
 	/**
@@ -1020,6 +1046,17 @@ public final class PlaybackService extends Service
 
 		if ( ((toggled & FLAG_PLAYING) != 0) && mCurrentSong != null) { // user requested to start playback AND we have a song selected
 			if ((state & FLAG_PLAYING) != 0) {
+				final int result = mAudioManager.requestAudioFocus(mAudioFocusRequest);
+				if (result != AudioManager.AUDIOFOCUS_REQUEST_GRANTED) {
+					Log.w("VanillaMusic", "audio focus request failed: " + result);
+					mPausedByTransientAudioFocusLoss = false;
+					unsetFlag(FLAG_PLAYING);
+					setupSensor();
+					return;
+				}
+
+				mPausedByTransientAudioFocusLoss = false;
+				mHandler.removeMessages(MSG_ENTER_SLEEP_STATE);
 
 				// We get noisy: Acquire a new AudioFX session if required
 				if (mMediaPlayerAudioFxActive == false) {
@@ -1033,13 +1070,6 @@ public final class PlaybackService extends Service
 				// Update the notification with the current song information.
 				updateMediaSession();
 				startForeground(NOTIFICATION_ID, createNotification(mCurrentSong, mState));
-
-				final int result = mAudioManager.requestAudioFocus(this, AudioManager.STREAM_MUSIC, AudioManager.AUDIOFOCUS_GAIN);
-				if (result != AudioManager.AUDIOFOCUS_REQUEST_GRANTED) {
-					unsetFlag(FLAG_PLAYING);
-				}
-
-				mHandler.removeMessages(MSG_ENTER_SLEEP_STATE);
 				try {
 					if (mWakeLock != null && mWakeLock.isHeld() == false)
 						mWakeLock.acquire();
@@ -1047,22 +1077,30 @@ public final class PlaybackService extends Service
 					// Don't have WAKE_LOCK permission
 				}
 			} else {
+				boolean pausedByTransientAudioFocusLoss = mPausedByTransientAudioFocusLoss;
+
 				if (mMediaPlayerInitialized)
 					mMediaPlayer.pause();
 
-				// We are switching into background mode. The notification will be removed
-				// unless we forcefully show it (or the user selected to always show it)
-				// In both cases we will update the notification to reflect the
-				// actual playback state (or to hit cancel() as this is required to
-				// get rid of it if it was created via notify())
-				boolean removeNotification = (mForceNotificationVisible == false && mNotificationVisibility != VISIBILITY_ALWAYS);
-				stopForeground(removeNotification);
-				updateNotification();
+				if (pausedByTransientAudioFocusLoss) {
+					saveCurrentPosition();
+					mHandler.removeMessages(MSG_ENTER_SLEEP_STATE);
+					updateNotification();
+				} else {
+					// We are switching into background mode. The notification will be removed
+					// unless we forcefully show it (or the user selected to always show it)
+					// In both cases we will update the notification to reflect the
+					// actual playback state (or to hit cancel() as this is required to
+					// get rid of it if it was created via notify())
+					boolean removeNotification = (mForceNotificationVisible == false && mNotificationVisibility != VISIBILITY_ALWAYS);
+					stopForeground(removeNotification);
+					updateNotification();
 
-				// Delay entering deep sleep. This allows the headset
-				// button to continue to function for a short period after
-				// pausing and keeps the AudioFX session open
-				mHandler.sendEmptyMessageDelayed(MSG_ENTER_SLEEP_STATE, SLEEP_STATE_DELAY);
+					// Delay entering deep sleep. This allows the headset
+					// button to continue to function for a short period after
+					// pausing and keeps the AudioFX session open
+					mHandler.sendEmptyMessageDelayed(MSG_ENTER_SLEEP_STATE, SLEEP_STATE_DELAY);
+				}
 			}
 
 			setupSensor();
@@ -1237,6 +1275,7 @@ public final class PlaybackService extends Service
 	{
 		synchronized (mStateLock) {
 			mTransientAudioLoss = false; // do not resume playback as this pause was user initiated
+			mPausedByTransientAudioFocusLoss = false;
 			int state = updateState(mState & ~FLAG_PLAYING & ~FLAG_DUCKING);
 			userActionTriggered();
 			return state;
@@ -2189,23 +2228,28 @@ public final class PlaybackService extends Service
 					if(type == AudioManager.AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK) {
 						setFlag(FLAG_DUCKING);
 					} else {
+						mPausedByTransientAudioFocusLoss = true;
 						mForceNotificationVisible = true;
-						unsetFlag(FLAG_PLAYING);
+						saveCurrentPosition();
+						unsetFlag(FLAG_PLAYING | FLAG_DUCKING);
 					}
 				}
 				break;
 			}
 		case AudioManager.AUDIOFOCUS_LOSS:
 			mTransientAudioLoss = false;
+			mPausedByTransientAudioFocusLoss = false;
 			mForceNotificationVisible = true;
-			unsetFlag(FLAG_PLAYING);
+			saveCurrentPosition();
+			unsetFlag(FLAG_PLAYING | FLAG_DUCKING);
 			break;
 		case AudioManager.AUDIOFOCUS_GAIN:
 			if (mTransientAudioLoss) {
 				mTransientAudioLoss = false;
 				// Restore all flags possibly changed by AUDIOFOCUS_LOSS_TRANSIENT_*
 				unsetFlag(FLAG_DUCKING);
-				setFlag(FLAG_PLAYING);
+				if (mPausedByTransientAudioFocusLoss)
+					setFlag(FLAG_PLAYING);
 			}
 			break;
 		}
